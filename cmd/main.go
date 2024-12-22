@@ -9,9 +9,17 @@ import (
 	"strconv"
 )
 
+type ErrorCode string
+
+// Кастомный текст ошибок
+const (
+	ErrUnprocessableEntity ErrorCode = "Expression is not valid"
+	ErrInternalServerError ErrorCode = "Internal server error"
+)
+
 type CalcResponse struct { // Body ответа от сервера
-	Result float64 `json:"result,omitempty"` // тк поле может быть опциональным - либо ошибки нет, есть результат
-	Error  string  `json:"error,omitempty"`  // тк поле может быть опциональным - либо ошибка есть, нет результата
+	Result float64   `json:"result,omitempty"` // тк поле может быть опциональным - либо ошибки нет, есть результат
+	Error  ErrorCode `json:"error,omitempty"`  // тк поле может быть опциональным - либо ошибка есть, нет результата
 }
 
 type CalcRequest struct { // Body запроса на вход
@@ -342,8 +350,8 @@ func CalcHandler(w http.ResponseWriter, r *http.Request) {
 	var req CalcRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		log.Println("Error decoding JSON body:", err)
-		w.WriteHeader(422)
-		json.NewEncoder(w).Encode(CalcResponse{Error: "Expression is not valid"})
+		w.WriteHeader(500)
+		json.NewEncoder(w).Encode(CalcResponse{Error: ErrInternalServerError})
 		return
 	}
 	defer r.Body.Close()
@@ -352,8 +360,9 @@ func CalcHandler(w http.ResponseWriter, r *http.Request) {
 	result, err := calc(expression)
 
 	if err != nil {
+		log.Println("Error while calculating:", err.Error())
 		w.WriteHeader(422)
-		json.NewEncoder(w).Encode(CalcResponse{Error: "Expression is not valid"})
+		json.NewEncoder(w).Encode(CalcResponse{Error: ErrUnprocessableEntity})
 		return
 	} else {
 		log.Println("Calculated successfully:", result)
@@ -365,7 +374,7 @@ func CalcHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println("Error marshaling JSON:", err)
 		w.WriteHeader(500)
-		json.NewEncoder(w).Encode(CalcResponse{Error: "Expression is not valid"})
+		json.NewEncoder(w).Encode(CalcResponse{Error: ErrInternalServerError})
 		return
 	}
 
