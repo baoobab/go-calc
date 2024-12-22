@@ -1,30 +1,10 @@
-package main
+package service
 
 import (
-	"encoding/json"
 	"errors"
-	"log"
-	"net/http"
 	"regexp"
 	"strconv"
 )
-
-type ErrorCode string
-
-// Кастомный текст ошибок
-const (
-	ErrUnprocessableEntity ErrorCode = "Expression is not valid"
-	ErrInternalServerError ErrorCode = "Internal server error"
-)
-
-type CalcResponse struct { // Body ответа от сервера
-	Result float64   `json:"result,omitempty"` // тк поле может быть опциональным - либо ошибки нет, есть результат
-	Error  ErrorCode `json:"error,omitempty"`  // тк поле может быть опциональным - либо ошибка есть, нет результата
-}
-
-type CalcRequest struct { // Body запроса на вход
-	Expression string `json:"expression"`
-}
 
 // Проверить, что символ - это оператор (бинарный)
 func isBinaryOperator(symbol string) bool {
@@ -278,8 +258,8 @@ func validateInfix(expression string) (bool, error) {
 	return true, nil
 }
 
-// calc Вычисление выражения (записанного в инфиксной форме)
-func calc(expression string) (float64, error) {
+// Calc Вычисление выражения (записанного в инфиксной форме)
+func Calc(expression string) (float64, error) {
 	postfixExpression, err := infixToPostfix(expression)
 
 	// Конвертировали в постфиксную форму, проверяем на наличие ошибок
@@ -333,55 +313,4 @@ func calc(expression string) (float64, error) {
 
 	// Результат - оставшееся число из стека
 	return operandsStack[len(operandsStack)-1], nil
-}
-
-func startServer() {
-	http.HandleFunc("/api/v1/calculate", CalcHandler)
-
-	log.Println("Server started")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
-		log.Println("Error starting server:", err)
-	}
-}
-
-func CalcHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	var req CalcRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		log.Println("Error decoding JSON body:", err)
-		w.WriteHeader(500)
-		json.NewEncoder(w).Encode(CalcResponse{Error: ErrInternalServerError})
-		return
-	}
-	defer r.Body.Close()
-
-	expression := req.Expression
-	result, err := calc(expression)
-
-	if err != nil {
-		log.Println("Error while calculating:", err.Error())
-		w.WriteHeader(422)
-		json.NewEncoder(w).Encode(CalcResponse{Error: ErrUnprocessableEntity})
-		return
-	} else {
-		log.Println("Calculated successfully:", result)
-	}
-
-	resp := CalcResponse{Result: result}
-	jsonResponse, err := json.Marshal(resp)
-
-	if err != nil {
-		log.Println("Error marshaling JSON:", err)
-		w.WriteHeader(500)
-		json.NewEncoder(w).Encode(CalcResponse{Error: ErrInternalServerError})
-		return
-	}
-
-	w.WriteHeader(200)
-	w.Write(jsonResponse)
-}
-
-func main() {
-	startServer()
 }

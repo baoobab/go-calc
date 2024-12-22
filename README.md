@@ -34,13 +34,13 @@
 ## Билд
 
 ```
-go build cmd/main.go
+go build
 ```
 
 ## Запуск
 
 ```
-go run cmd/main.go
+go run main.go
 ```
 
 ## Примеры взаимодействия через curl
