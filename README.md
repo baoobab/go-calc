@@ -12,12 +12,12 @@
 
 ## Структура ответов
 
-При успешной обработке:
-: статус 200, объект с полем `result` (структура `type CalcResponse`).
+- При успешной обработке
+<br>Статус 200, объект с полем `result` (структура `type CalcResponse`).
 <br>Пример успешного ответа: `{ "result": 2.5 } `
 
-Иначе:
-: статус 422 или 500, объект с полем `error` (структура `type CalcResponse`).
+- Иначе 
+<br>Статус 422 или 500, объект с полем `error` (структура `type CalcResponse`).
 <br> Пример неудачного ответа: `{ "error": "Expression is not valid" } `
 
 ## Разрешённые символы
@@ -47,7 +47,7 @@ go run cmd/main.go
 
 1. **Корректный** запрос:
     ```
-    curl --location 'localhost/api/v1/calculate' \
+    curl --location 'localhost:8080/api/v1/calculate' \
     --header 'Content-Type: application/json' \
     --data '{
       "expression": "2+2*2"
@@ -57,7 +57,7 @@ go run cmd/main.go
 
 2. **Некорректный** запрос:
     ```
-    curl --location 'localhost/api/v1/calculate' \
+    curl --location 'localhost:8080/api/v1/calculate' \
     --header 'Content-Type: application/json' \
     --data '{
       "expression": "bibi bebe"
@@ -67,7 +67,7 @@ go run cmd/main.go
 
 3. Внутренняя ошибка сервера (запрос роли не играет):
    ```
-    curl --location 'localhost/api/v1/calculate' \
+    curl --location 'localhost:8080/api/v1/calculate' \
     --header 'Content-Type: application/json' \
     --data ''
     ```
